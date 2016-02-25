@@ -24,11 +24,13 @@ package be.ugent.psb.coexpnetviz.gui.jobinput;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import be.ugent.psb.coexpnetviz.CENVContext;
 import be.ugent.psb.coexpnetviz.io.JobDescription;
@@ -44,7 +46,6 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleListProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -53,8 +54,6 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -233,10 +232,12 @@ public class JobInputPane extends GridPane {
 					validator.setName("Preset name");
 					name = validator.ensureIsNotEmpty(name);
 				}
-				catch (ValidationException e) {
-					Alert alert = new Alert(AlertType.ERROR);
-					alert.setContentText(e.getMessage());
-					alert.showAndWait();
+				catch (final ValidationException e) {
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							JOptionPane.showMessageDialog(null, e.getMessage(), "Preset name error", JOptionPane.ERROR_MESSAGE);
+						};
+					});
 					return;
 				}
 				
@@ -251,22 +252,38 @@ public class JobInputPane extends GridPane {
 				}
 				
 				// need overwrite?
-				JobInputPreset newPreset = new JobInputPreset(name, model);
+				final JobInputPreset newPreset = new JobInputPreset(name, model);
+				final JobInputPreset existing2 = existing; // Note: sigh, Java closures...
 				if (existing != null) {
 					// confirm overwrite
-					Alert alert = new Alert(AlertType.CONFIRMATION);
-					alert.setContentText("A preset with this name already exists. Would you like to overwrite it?");
-					ButtonType overwrite = new ButtonType("Overwrite");
-					ButtonType cancel = new ButtonType("Cancel");
-					alert.getButtonTypes().setAll(overwrite, cancel);
-					if (alert.showAndWait().get() == cancel) {
-						return;
-					}
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							int result = JOptionPane.showConfirmDialog(null, "A preset with this name already exists, would you like to overwrite it?", "Overwrite preset?", JOptionPane.YES_NO_OPTION);
+							if (result == JOptionPane.YES_OPTION) {
+								int i = presets.indexOf(existing2);
+								presets.remove(i);
+								presets.add(i, newPreset);
+								
+								presetsComboBox.getSelectionModel().select(newPreset);
+								context.getConfiguration().setLastUsedPreset(newPreset);
+							}
+						};
+					});
+					return;
+					
+//					Alert alert = new Alert(AlertType.CONFIRMATION);
+//					alert.setContentText("A preset with this name already exists. Would you like to overwrite it?");
+//					ButtonType overwrite = new ButtonType("Overwrite");
+//					ButtonType cancel = new ButtonType("Cancel");
+//					alert.getButtonTypes().setAll(overwrite, cancel);
+//					if (alert.showAndWait().get() == cancel) {
+//						return;
+//					}
 					
 					// overwrite (replace)
-					int i = presets.indexOf(existing);
-					presets.remove(i);
-					presets.add(i, newPreset);
+//					int i = presets.indexOf(existing);
+//					presets.remove(i);
+//					presets.add(i, newPreset);
 				}
 				else {
 					// add new one

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>be.ugent.psb</groupId>
     <artifactId>CoExpNetViz</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <name>CoExpNetViz</name>
 	
@@ -46,8 +46,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                     <optimize>true</optimize>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
